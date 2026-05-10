@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public read of the tournament doc; only signed-in admins can write.
+    // Disable self-signup in Firebase Auth so only accounts you create
+    // (in the Firebase Console) can write to the tournament.
+    match /tournaments/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
