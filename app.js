@@ -37,9 +37,9 @@
     }
     if (!s.players) s.players = [{ name: '', rating: 0 }, { name: '', rating: 0 }];
     if (!s.handicap) s.handicap = defaultHandicap();
-    if (s.poules && !s._scheduled) {
+    if (s.poules && s._scheduled !== 2) {
       s.poules.forEach(p => { p.matches = scheduleMatches(p.matches); });
-      s._scheduled = true;
+      s._scheduled = 2;
     }
     return s;
   }
@@ -89,31 +89,90 @@
     return scheduleMatches(matches);
   }
 
-  // Greedy reordering: prefer the next match to share no player with the
-  // previous one, and tie-break on whichever players have rested longest.
+  // Deterministic match scheduler. Tries multiple starting matches and
+  // scoring weight combinations, keeping the schedule with the fewest
+  // back-to-back appearances and, as a tiebreak, the most evenly spaced
+  // matches per player. Output is fully determined by the input.
   function scheduleMatches(matches) {
-    const remaining = matches.slice();
-    const ordered = [];
-    const lastPlayed = {};
+    if (matches.length <= 1) return matches.slice();
+    const canonical = matches.slice().sort((a, b) =>
+      a.players[0].localeCompare(b.players[0]) ||
+      a.players[1].localeCompare(b.players[1]));
+    const totalPlays = {};
+    for (const m of canonical) {
+      totalPlays[m.players[0]] = (totalPlays[m.players[0]] || 0) + 1;
+      totalPlays[m.players[1]] = (totalPlays[m.players[1]] || 0) + 1;
+    }
+    const weights = [[1, 0], [0, 1], [1, 0.1], [1, 1]];
+    let best = null, bestKey = null;
+    for (const [wu, wr] of weights) {
+      for (let startIdx = 0; startIdx < canonical.length; startIdx++) {
+        const candidate = scheduleGreedy(canonical, startIdx, totalPlays, wu, wr);
+        const key = scheduleScore(candidate);
+        if (!bestKey || key[0] < bestKey[0] || (key[0] === bestKey[0] && key[1] < bestKey[1])) {
+          bestKey = key;
+          best = candidate;
+        }
+      }
+    }
+    return best;
+  }
+
+  function scheduleGreedy(canonical, startIdx, totalPlays, wUrgency, wRest) {
+    const M = canonical.length;
+    const remaining = canonical.slice();
+    const start = remaining.splice(startIdx, 1)[0];
+    const ordered = [start];
+    const played = {}, lastPlayed = {};
+    for (const p in totalPlays) { played[p] = 0; lastPlayed[p] = -1; }
+    played[start.players[0]]++; played[start.players[1]]++;
+    lastPlayed[start.players[0]] = 0; lastPlayed[start.players[1]] = 0;
     while (remaining.length) {
-      const last = ordered[ordered.length - 1];
-      const lastPlayers = last ? new Set(last.players) : new Set();
-      let bestIdx = 0;
-      let bestScore = -Infinity;
+      const lastPlayers = new Set(ordered[ordered.length - 1].players);
+      const nextPos = ordered.length + 1;
+      let bestIdx = 0, bestScore = -Infinity;
       for (let i = 0; i < remaining.length; i++) {
         const m = remaining[i];
         const shares = m.players.some(p => lastPlayers.has(p));
-        const restA = ordered.length - (lastPlayed[m.players[0]] ?? -1);
-        const restB = ordered.length - (lastPlayed[m.players[1]] ?? -1);
-        const score = (shares ? -1e6 : 0) + Math.min(restA, restB);
-        if (score > bestScore) { bestScore = score; bestIdx = i; }
+        let urgency = 0, minRest = Infinity;
+        for (const p of m.players) {
+          urgency += totalPlays[p] * nextPos / M - played[p];
+          const rest = ordered.length - lastPlayed[p];
+          if (rest < minRest) minRest = rest;
+        }
+        const sc = (shares ? -1e9 : 0) + wUrgency * urgency + wRest * minRest;
+        if (sc > bestScore) { bestScore = sc; bestIdx = i; }
       }
       const chosen = remaining.splice(bestIdx, 1)[0];
       ordered.push(chosen);
+      played[chosen.players[0]]++; played[chosen.players[1]]++;
       lastPlayed[chosen.players[0]] = ordered.length - 1;
       lastPlayed[chosen.players[1]] = ordered.length - 1;
     }
     return ordered;
+  }
+
+  function scheduleScore(order) {
+    let b2b = 0;
+    for (let i = 1; i < order.length; i++) {
+      const prev = new Set(order[i - 1].players);
+      if (order[i].players.some(p => prev.has(p))) b2b++;
+    }
+    const positions = {};
+    for (let i = 0; i < order.length; i++) {
+      for (const p of order[i].players) (positions[p] = positions[p] || []).push(i);
+    }
+    let variance = 0;
+    for (const p in positions) {
+      const ps = positions[p];
+      if (ps.length < 2) continue;
+      const ideal = order.length / ps.length;
+      for (let i = 1; i < ps.length; i++) {
+        const d = (ps[i] - ps[i - 1]) - ideal;
+        variance += d * d;
+      }
+    }
+    return [b2b, variance];
   }
 
   function generateTournament() {
@@ -449,7 +508,9 @@
 
       // Standings table
       const standings = computeStandings(poule, state.bestOf);
+      const medalClass = idx => idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
       const table = document.createElement('table');
+      table.className = 'standings-table';
       table.innerHTML = `
         <thead>
           <tr>
@@ -464,9 +525,9 @@
         </thead>
         <tbody>
           ${standings.map((s, idx) => `
-            <tr>
-              <td class="num ${idx < state.qualifiers ? 'qualifier' : ''}">${idx + 1}</td>
-              <td class="${idx < state.qualifiers ? 'qualifier' : ''}">${escapeHtml(s.player)}</td>
+            <tr class="${idx < state.qualifiers ? 'is-qualifier' : ''}">
+              <td class="num"><span class="rank-badge ${medalClass(idx)}">${idx + 1}</span></td>
+              <td class="player-name">${escapeHtml(s.player)}</td>
               <td class="num">${s.played}</td>
               <td class="num">${s.wins}</td>
               <td class="num">${s.losses}</td>

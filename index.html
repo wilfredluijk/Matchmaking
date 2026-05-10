@@ -3,17 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Table Tennis Poule Matchmaking</title>
+  <title>Smash · Table Tennis Tournament</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora-blob a"></span>
+    <span class="aurora-blob b"></span>
+    <span class="aurora-blob c"></span>
+  </div>
+
   <header>
-    <h1>Table Tennis Poule Matchmaking</h1>
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <h1>Smash<span class="brand-dot">.</span></h1>
+      <span class="brand-tag">table&nbsp;tennis&nbsp;tournament</span>
+    </div>
     <nav>
       <button data-tab="setup" class="tab-btn active">Setup</button>
       <button data-tab="poules" class="tab-btn">Poules</button>
       <button data-tab="knockout" class="tab-btn">Knockout</button>
-      <button id="reset-btn" class="danger">Reset all</button>
+      <button id="reset-btn" class="danger ghost">Reset</button>
     </nav>
   </header>
 
@@ -25,7 +38,7 @@
       <label>Players</label>
       <div id="players-list"></div>
       <div class="actions" style="margin-top: 8px;">
-        <button id="add-player-btn">+ Add player</button>
+        <button id="add-player-btn" class="ghost">+ Add player</button>
       </div>
 
       <div class="row">
@@ -53,13 +66,13 @@
         <p class="hint">The lower-rated player starts each set with the listed points. Leave the upper bound empty for "or more".</p>
         <div id="handicap-list"></div>
         <div class="actions" style="margin-top: 8px;">
-          <button id="add-handicap-btn">+ Add row</button>
-          <button id="reset-handicap-btn">Reset to default</button>
+          <button id="add-handicap-btn" class="ghost">+ Add row</button>
+          <button id="reset-handicap-btn" class="ghost">Reset to default</button>
         </div>
       </details>
 
       <div class="actions">
-        <button id="generate-btn" class="primary">Generate tournament</button>
+        <button id="generate-btn" class="primary">Generate tournament →</button>
       </div>
     </section>
 
@@ -67,7 +80,7 @@
       <h2>Poule stage</h2>
       <div id="poules-container"></div>
       <div class="actions">
-        <button id="goto-knockout-btn" class="primary">Continue to knockout</button>
+        <button id="goto-knockout-btn" class="primary">Continue to knockout →</button>
       </div>
     </section>
 
@@ -78,7 +91,7 @@
   </main>
 
   <footer>
-    <small>All data is saved in your browser (localStorage). Resetting clears everything.</small>
+    <small>Data lives in your browser (localStorage). Resetting clears everything.</small>
   </footer>
 
   <script src="app.js"></script>
