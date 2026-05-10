@@ -20,10 +20,13 @@
   <main>
     <section id="tab-setup" class="tab active">
       <h2>Setup tournament</h2>
-      <p class="hint">Enter one player name per line. Players are distributed evenly across the chosen number of poules.</p>
+      <p class="hint">Add one row per player with their name and rating. Players are distributed evenly across the chosen number of poules.</p>
 
-      <label for="players">Players</label>
-      <textarea id="players" rows="10" placeholder="Alice&#10;Bob&#10;Charlie&#10;..."></textarea>
+      <label>Players</label>
+      <div id="players-list"></div>
+      <div class="actions" style="margin-top: 8px;">
+        <button id="add-player-btn">+ Add player</button>
+      </div>
 
       <div class="row">
         <div>
@@ -44,6 +47,16 @@
           </select>
         </div>
       </div>
+
+      <details class="handicap-section">
+        <summary>Handicap table (rating difference → starting points)</summary>
+        <p class="hint">The lower-rated player starts each set with the listed points. Leave the upper bound empty for "or more".</p>
+        <div id="handicap-list"></div>
+        <div class="actions" style="margin-top: 8px;">
+          <button id="add-handicap-btn">+ Add row</button>
+          <button id="reset-handicap-btn">Reset to default</button>
+        </div>
+      </details>
 
       <div class="actions">
         <button id="generate-btn" class="primary">Generate tournament</button>

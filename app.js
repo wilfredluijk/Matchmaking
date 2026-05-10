@@ -3,11 +3,24 @@
 
   const STORAGE_KEY = 'tt-poule-tournament-v1';
 
-  let state = load() || emptyState();
+  let state = migrate(load()) || emptyState();
+
+  function defaultHandicap() {
+    return [
+      { min: 0, max: 135, points: 0 },
+      { min: 136, max: 270, points: 2 },
+      { min: 271, max: 305, points: 3 },
+      { min: 306, max: 440, points: 4 },
+      { min: 441, max: 575, points: 5 },
+      { min: 576, max: 810, points: 6 },
+      { min: 811, max: null, points: 7 },
+    ];
+  }
 
   function emptyState() {
     return {
-      players: [],
+      players: [{ name: '', rating: 0 }, { name: '', rating: 0 }],
+      handicap: defaultHandicap(),
       numPoules: 2,
       qualifiers: 2,
       bestOf: 3,
@@ -15,6 +28,16 @@
       knockout: null,
       activeTab: 'setup',
     };
+  }
+
+  function migrate(s) {
+    if (!s) return null;
+    if (Array.isArray(s.players) && s.players.length && typeof s.players[0] === 'string') {
+      s.players = s.players.map(name => ({ name, rating: 0 }));
+    }
+    if (!s.players) s.players = [{ name: '', rating: 0 }, { name: '', rating: 0 }];
+    if (!s.handicap) s.handicap = defaultHandicap();
+    return s;
   }
 
   function load() {
@@ -63,8 +86,9 @@
   }
 
   function generateTournament() {
-    const playersText = document.getElementById('players').value;
-    const players = playersText.split('\n').map(s => s.trim()).filter(Boolean);
+    const players = state.players
+      .map(p => ({ name: (p.name || '').trim(), rating: Number(p.rating) || 0 }))
+      .filter(p => p.name);
     const numPoules = Math.max(1, parseInt(document.getElementById('num-poules').value, 10) || 1);
     const qualifiers = Math.max(1, parseInt(document.getElementById('qualifiers').value, 10) || 1);
     const bestOf = parseInt(document.getElementById('best-of').value, 10) || 3;
@@ -78,35 +102,56 @@
       return;
     }
 
-    // Detect duplicate names — they would corrupt match identity.
     const seen = new Set();
     for (const p of players) {
-      if (seen.has(p)) {
-        alert(`Duplicate player name: "${p}". Names must be unique.`);
+      if (seen.has(p.name)) {
+        alert(`Duplicate player name: "${p.name}". Names must be unique.`);
         return;
       }
-      seen.add(p);
+      seen.add(p.name);
     }
 
-    const distributed = distributePlayers(players, numPoules);
+    const names = players.map(p => p.name);
+    const distributed = distributePlayers(names, numPoules);
     const poules = distributed.map((pls, idx) => ({
       name: `Poule ${String.fromCharCode(65 + idx)}`,
       players: pls,
       matches: generateRoundRobin(pls),
     }));
 
-    state = {
-      players,
-      numPoules,
-      qualifiers,
-      bestOf,
-      poules,
-      knockout: null,
-      activeTab: 'poules',
-    };
+    state.players = players;
+    state.numPoules = numPoules;
+    state.qualifiers = qualifiers;
+    state.bestOf = bestOf;
+    state.poules = poules;
+    state.knockout = null;
+    state.activeTab = 'poules';
     save();
     renderAll();
     setActiveTab('poules');
+  }
+
+  function getRating(name) {
+    const p = state.players.find(x => x.name === name);
+    return p ? Number(p.rating) || 0 : 0;
+  }
+
+  function lookupHandicapPoints(diff) {
+    for (const r of state.handicap) {
+      const min = Number(r.min) || 0;
+      const max = (r.max == null || r.max === '') ? Infinity : Number(r.max);
+      if (diff >= min && diff <= max) return Number(r.points) || 0;
+    }
+    return 0;
+  }
+
+  function getMatchHandicap(playerA, playerB) {
+    if (!playerA || !playerB) return null;
+    const ra = getRating(playerA), rb = getRating(playerB);
+    const diff = Math.abs(ra - rb);
+    const points = lookupHandicapPoints(diff);
+    if (!points) return null;
+    return { side: ra < rb ? 0 : 1, points, diff, lowerName: ra < rb ? playerA : playerB };
   }
 
   // ---------- Match logic ----------
@@ -291,10 +336,71 @@
   }
 
   function renderSetup() {
-    document.getElementById('players').value = state.players.join('\n');
+    renderPlayerList();
+    renderHandicapList();
     document.getElementById('num-poules').value = state.numPoules;
     document.getElementById('qualifiers').value = state.qualifiers;
     document.getElementById('best-of').value = state.bestOf;
+  }
+
+  function renderPlayerList() {
+    const list = document.getElementById('players-list');
+    list.innerHTML = '';
+    state.players.forEach((p, idx) => {
+      const row = document.createElement('div');
+      row.className = 'player-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Player ${idx + 1}" data-field="name" value="${escapeAttr(p.name || '')}" />
+        <input type="number" placeholder="Rating" data-field="rating" value="${p.rating ?? ''}" />
+        <button type="button" class="row-remove" title="Remove">×</button>
+      `;
+      const [nameInp, ratingInp] = row.querySelectorAll('input');
+      nameInp.addEventListener('input', e => { state.players[idx].name = e.target.value; save(); });
+      ratingInp.addEventListener('input', e => {
+        state.players[idx].rating = e.target.value === '' ? 0 : Number(e.target.value);
+        save();
+      });
+      row.querySelector('.row-remove').addEventListener('click', () => {
+        state.players.splice(idx, 1);
+        if (state.players.length === 0) state.players.push({ name: '', rating: 0 });
+        save();
+        renderPlayerList();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function renderHandicapList() {
+    const list = document.getElementById('handicap-list');
+    list.innerHTML = '';
+    state.handicap.forEach((rule, idx) => {
+      const row = document.createElement('div');
+      row.className = 'handicap-row';
+      row.innerHTML = `
+        <input type="number" placeholder="min" data-field="min" value="${rule.min ?? ''}" />
+        <span class="sep">–</span>
+        <input type="number" placeholder="max" data-field="max" value="${rule.max ?? ''}" />
+        <span class="sep">→</span>
+        <input type="number" placeholder="pts" data-field="points" value="${rule.points ?? ''}" />
+        <button type="button" class="row-remove" title="Remove">×</button>
+      `;
+      const [minInp, maxInp, ptsInp] = row.querySelectorAll('input');
+      minInp.addEventListener('input', e => { rule.min = e.target.value === '' ? 0 : Number(e.target.value); save(); refreshMatchViews(); });
+      maxInp.addEventListener('input', e => { rule.max = e.target.value === '' ? null : Number(e.target.value); save(); refreshMatchViews(); });
+      ptsInp.addEventListener('input', e => { rule.points = e.target.value === '' ? 0 : Number(e.target.value); save(); refreshMatchViews(); });
+      row.querySelector('.row-remove').addEventListener('click', () => {
+        state.handicap.splice(idx, 1);
+        save();
+        renderHandicapList();
+        refreshMatchViews();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  function refreshMatchViews() {
+    if (state.poules) renderPoules();
+    if (state.knockout) renderKnockout();
   }
 
   function renderPoules() {
@@ -350,10 +456,16 @@
         li.className = 'match';
         if (r.winner === 0) li.classList.add('winner-a');
         if (r.winner === 1) li.classList.add('winner-b');
+        const hcap = getMatchHandicap(m.players[0], m.players[1]);
+        const ra = getRating(m.players[0]);
+        const rb = getRating(m.players[1]);
+        const labelA = ra ? `${escapeHtml(m.players[0])} <span class="hint">(${ra})</span>` : escapeHtml(m.players[0]);
+        const labelB = rb ? `${escapeHtml(m.players[1])} <span class="hint">(${rb})</span>` : escapeHtml(m.players[1]);
         li.innerHTML = `
-          <div class="player-a">${escapeHtml(m.players[0])}</div>
+          <div class="player-a">${labelA}</div>
           <div class="sets-input" data-poule="${pi}" data-match="${mi}"></div>
-          <div class="player-b">${escapeHtml(m.players[1])}</div>
+          <div class="player-b">${labelB}</div>
+          ${hcap ? `<div class="handicap-label">Handicap: ${escapeHtml(hcap.lowerName)} starts each set at ${hcap.points} (Δ ${hcap.diff})</div>` : ''}
         `;
         const inputs = li.querySelector('.sets-input');
         for (let s = 0; s < state.bestOf; s++) {
@@ -449,6 +561,15 @@
         matchEl.className = 'bracket-match';
         matchEl.appendChild(renderBracketRow(a, 0, ri, mi, r, isBye));
         matchEl.appendChild(renderBracketRow(b, 1, ri, mi, r, isBye));
+        if (a && b && !isBye) {
+          const hcap = getMatchHandicap(a.name, b.name);
+          if (hcap) {
+            const hl = document.createElement('div');
+            hl.className = 'bracket-handicap';
+            hl.textContent = `${hcap.lowerName} starts at ${hcap.points} (Δ ${hcap.diff})`;
+            matchEl.appendChild(hl);
+          }
+        }
         col.appendChild(matchEl);
       });
       bracket.appendChild(col);
@@ -513,6 +634,7 @@
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
+  function escapeAttr(s) { return escapeHtml(s); }
 
   // ---------- Tabs ----------
 
@@ -532,6 +654,37 @@
   document.getElementById('generate-btn').addEventListener('click', () => {
     if (state.poules && !confirm('A tournament already exists. Generating will replace it. Continue?')) return;
     generateTournament();
+  });
+
+  document.getElementById('add-player-btn').addEventListener('click', () => {
+    state.players.push({ name: '', rating: 0 });
+    save();
+    renderPlayerList();
+  });
+
+  document.getElementById('add-handicap-btn').addEventListener('click', () => {
+    state.handicap.push({ min: 0, max: null, points: 0 });
+    save();
+    renderHandicapList();
+    refreshMatchViews();
+  });
+
+  document.getElementById('reset-handicap-btn').addEventListener('click', () => {
+    if (!confirm('Reset handicap table to defaults?')) return;
+    state.handicap = defaultHandicap();
+    save();
+    renderHandicapList();
+    refreshMatchViews();
+  });
+
+  ['num-poules', 'qualifiers', 'best-of'].forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      const val = id === 'best-of' ? parseInt(e.target.value, 10) : Math.max(1, parseInt(e.target.value, 10) || 1);
+      if (id === 'num-poules') state.numPoules = val;
+      else if (id === 'qualifiers') state.qualifiers = val;
+      else state.bestOf = val;
+      save();
+    });
   });
 
   document.getElementById('goto-knockout-btn').addEventListener('click', () => {
