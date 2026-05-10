@@ -37,6 +37,10 @@
     }
     if (!s.players) s.players = [{ name: '', rating: 0 }, { name: '', rating: 0 }];
     if (!s.handicap) s.handicap = defaultHandicap();
+    if (s.poules && !s._scheduled) {
+      s.poules.forEach(p => { p.matches = scheduleMatches(p.matches); });
+      s._scheduled = true;
+    }
     return s;
   }
 
@@ -82,7 +86,34 @@
         });
       }
     }
-    return matches;
+    return scheduleMatches(matches);
+  }
+
+  // Greedy reordering: prefer the next match to share no player with the
+  // previous one, and tie-break on whichever players have rested longest.
+  function scheduleMatches(matches) {
+    const remaining = matches.slice();
+    const ordered = [];
+    const lastPlayed = {};
+    while (remaining.length) {
+      const last = ordered[ordered.length - 1];
+      const lastPlayers = last ? new Set(last.players) : new Set();
+      let bestIdx = 0;
+      let bestScore = -Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const m = remaining[i];
+        const shares = m.players.some(p => lastPlayers.has(p));
+        const restA = ordered.length - (lastPlayed[m.players[0]] ?? -1);
+        const restB = ordered.length - (lastPlayed[m.players[1]] ?? -1);
+        const score = (shares ? -1e6 : 0) + Math.min(restA, restB);
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+      }
+      const chosen = remaining.splice(bestIdx, 1)[0];
+      ordered.push(chosen);
+      lastPlayed[chosen.players[0]] = ordered.length - 1;
+      lastPlayed[chosen.players[1]] = ordered.length - 1;
+    }
+    return ordered;
   }
 
   function generateTournament() {
@@ -448,55 +479,73 @@
       div.appendChild(table);
 
       // Matches
-      const ul = document.createElement('ul');
-      ul.className = 'match-list';
+      const matchesWrap = document.createElement('div');
+      matchesWrap.className = 'match-cards';
       poule.matches.forEach((m, mi) => {
-        const r = matchResult(m, state.bestOf);
-        const li = document.createElement('li');
-        li.className = 'match';
-        if (r.winner === 0) li.classList.add('winner-a');
-        if (r.winner === 1) li.classList.add('winner-b');
-        const hcap = getMatchHandicap(m.players[0], m.players[1]);
-        const ra = getRating(m.players[0]);
-        const rb = getRating(m.players[1]);
-        const labelA = ra ? `${escapeHtml(m.players[0])} <span class="hint">(${ra})</span>` : escapeHtml(m.players[0]);
-        const labelB = rb ? `${escapeHtml(m.players[1])} <span class="hint">(${rb})</span>` : escapeHtml(m.players[1]);
-        li.innerHTML = `
-          <div class="player-a">${labelA}</div>
-          <div class="sets-input" data-poule="${pi}" data-match="${mi}"></div>
-          <div class="player-b">${labelB}</div>
-          ${hcap ? `<div class="handicap-label">Handicap: ${escapeHtml(hcap.lowerName)} starts each set at ${hcap.points} (Δ ${hcap.diff})</div>` : ''}
-        `;
-        const inputs = li.querySelector('.sets-input');
-        for (let s = 0; s < state.bestOf; s++) {
-          const cur = m.sets[s] || ['', ''];
-          const wrap = document.createElement('div');
-          wrap.style.display = 'flex';
-          wrap.style.flexDirection = 'column';
-          wrap.style.alignItems = 'center';
-          wrap.innerHTML = `
-            <input type="number" min="0" data-side="0" data-set="${s}" value="${cur[0] ?? ''}" />
-            <input type="number" min="0" data-side="1" data-set="${s}" value="${cur[1] ?? ''}" />
-          `;
-          inputs.appendChild(wrap);
-        }
-        ul.appendChild(li);
+        matchesWrap.appendChild(renderPouleMatchCard(poule, pi, m, mi));
       });
-      div.appendChild(ul);
+      div.appendChild(matchesWrap);
       container.appendChild(div);
     });
 
-    // Wire score inputs
-    container.querySelectorAll('.sets-input input').forEach(inp => {
+    container.querySelectorAll('.score-table input').forEach(inp => {
       inp.addEventListener('input', onScoreInput);
     });
   }
 
+  function renderPouleMatchCard(poule, pi, m, mi) {
+    const r = matchResult(m, state.bestOf);
+    const hcap = getMatchHandicap(m.players[0], m.players[1]);
+    const ra = getRating(m.players[0]);
+    const rb = getRating(m.players[1]);
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    if (r.winner != null) card.classList.add('finished');
+
+    const setHeaders = Array.from({ length: state.bestOf }, (_, i) => `<th>Set ${i + 1}</th>`).join('');
+    const rowFor = (side) => {
+      const isWinner = r.winner === side;
+      const cells = Array.from({ length: state.bestOf }, (_, s) => {
+        const cur = (m.sets[s] || ['', ''])[side] ?? '';
+        return `<td><input type="number" min="0" inputmode="numeric"
+          data-poule="${pi}" data-match="${mi}" data-set="${s}" data-side="${side}"
+          value="${cur}" /></td>`;
+      }).join('');
+      const rating = side === 0 ? ra : rb;
+      const ratingHtml = rating ? `<span class="rating">${rating}</span>` : '';
+      return `<tr class="${isWinner ? 'winner' : ''}">
+        <th class="player-cell">${escapeHtml(m.players[side])} ${ratingHtml}</th>
+        ${cells}
+      </tr>`;
+    };
+
+    const resultText = r.winner != null
+      ? `${escapeHtml(m.players[r.winner])} wins ${r.winner === 0 ? r.setsA : r.setsB}–${r.winner === 0 ? r.setsB : r.setsA}`
+      : 'Match in progress';
+
+    card.innerHTML = `
+      <div class="match-card-header">
+        <span class="match-num">Match ${mi + 1}</span>
+        ${hcap ? `<span class="match-hcap">${escapeHtml(hcap.lowerName)} starts each set at ${hcap.points} <span class="hint">(Δ ${hcap.diff})</span></span>` : ''}
+      </div>
+      <table class="score-table">
+        <thead>
+          <tr><th></th>${setHeaders}</tr>
+        </thead>
+        <tbody>
+          ${rowFor(0)}
+          ${rowFor(1)}
+        </tbody>
+      </table>
+      <div class="match-result ${r.winner != null ? 'done' : ''}">${resultText}</div>
+    `;
+    return card;
+  }
+
   function onScoreInput(e) {
     const inp = e.target;
-    const wrap = inp.closest('.sets-input');
-    const pi = +wrap.dataset.poule;
-    const mi = +wrap.dataset.match;
+    const pi = +inp.dataset.poule;
+    const mi = +inp.dataset.match;
     const setIdx = +inp.dataset.set;
     const side = +inp.dataset.side;
     const match = state.poules[pi].matches[mi];
@@ -505,10 +554,12 @@
     match.sets[setIdx] = match.sets[setIdx] || ['', ''];
     match.sets[setIdx][side] = val;
     save();
-    // Re-render only this poule (lighter than full) — but for simplicity just re-render all poules.
     renderPoules();
-    // If knockout exists, also re-render to update auto-advance results.
     if (state.knockout) renderKnockout();
+    const restored = document.querySelector(
+      `.score-table input[data-poule="${pi}"][data-match="${mi}"][data-set="${setIdx}"][data-side="${side}"]`
+    );
+    if (restored) restored.focus();
   }
 
   function renderKnockout() {
@@ -629,6 +680,10 @@
     match.sets[setIdx][side] = val;
     save();
     renderKnockout();
+    const restored = document.querySelector(
+      `.bracket-row input[data-round="${ri}"][data-match="${mi}"][data-set="${setIdx}"][data-side="${side}"]`
+    );
+    if (restored) restored.focus();
   }
 
   function escapeHtml(s) {
