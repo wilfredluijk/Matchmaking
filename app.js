@@ -508,7 +508,9 @@
 
       // Standings table
       const standings = computeStandings(poule, state.bestOf);
+      const medalClass = idx => idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
       const table = document.createElement('table');
+      table.className = 'standings-table';
       table.innerHTML = `
         <thead>
           <tr>
@@ -523,9 +525,9 @@
         </thead>
         <tbody>
           ${standings.map((s, idx) => `
-            <tr>
-              <td class="num ${idx < state.qualifiers ? 'qualifier' : ''}">${idx + 1}</td>
-              <td class="${idx < state.qualifiers ? 'qualifier' : ''}">${escapeHtml(s.player)}</td>
+            <tr class="${idx < state.qualifiers ? 'is-qualifier' : ''}">
+              <td class="num"><span class="rank-badge ${medalClass(idx)}">${idx + 1}</span></td>
+              <td class="player-name">${escapeHtml(s.player)}</td>
               <td class="num">${s.played}</td>
               <td class="num">${s.wins}</td>
               <td class="num">${s.losses}</td>
