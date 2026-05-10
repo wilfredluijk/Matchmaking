@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Table Tennis Poule Matchmaking</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Table Tennis Poule Matchmaking</h1>
+    <nav>
+      <button data-tab="setup" class="tab-btn active">Setup</button>
+      <button data-tab="poules" class="tab-btn">Poules</button>
+      <button data-tab="knockout" class="tab-btn">Knockout</button>
+      <button id="reset-btn" class="danger">Reset all</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-setup" class="tab active">
+      <h2>Setup tournament</h2>
+      <p class="hint">Enter one player name per line. Players are distributed evenly across the chosen number of poules.</p>
+
+      <label for="players">Players</label>
+      <textarea id="players" rows="10" placeholder="Alice&#10;Bob&#10;Charlie&#10;..."></textarea>
+
+      <div class="row">
+        <div>
+          <label for="num-poules">Number of poules</label>
+          <input id="num-poules" type="number" min="1" value="2" />
+        </div>
+        <div>
+          <label for="qualifiers">Qualifiers per poule</label>
+          <input id="qualifiers" type="number" min="1" value="2" />
+        </div>
+        <div>
+          <label for="best-of">Match format</label>
+          <select id="best-of">
+            <option value="1">Single set (highest score wins)</option>
+            <option value="3" selected>Best of 3 sets</option>
+            <option value="5">Best of 5 sets</option>
+            <option value="7">Best of 7 sets</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="generate-btn" class="primary">Generate tournament</button>
+      </div>
+    </section>
+
+    <section id="tab-poules" class="tab">
+      <h2>Poule stage</h2>
+      <div id="poules-container"></div>
+      <div class="actions">
+        <button id="goto-knockout-btn" class="primary">Continue to knockout</button>
+      </div>
+    </section>
+
+    <section id="tab-knockout" class="tab">
+      <h2>Knockout stage</h2>
+      <div id="knockout-container"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>All data is saved in your browser (localStorage). Resetting clears everything.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
