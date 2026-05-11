@@ -544,7 +544,7 @@ select option { background: #1a1432; color: var(--text); }
 /* Match cards */
 .match-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width, 300px), 1fr));
   gap: 14px;
 }
 
@@ -650,8 +650,7 @@ select option { background: #1a1432; color: var(--text); }
   font-weight: 700;
   font-size: 1.1rem;
   font-variant-numeric: tabular-nums;
-  transition: all 0.15s;
-  -moz-appearance: textfield;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 .score-table input:hover { border-color: var(--border-strong); }
 .score-table input:focus {
@@ -720,6 +719,16 @@ select option { background: #1a1432; color: var(--text); }
   color: var(--text-muted);
   font-weight: 700;
   margin: 0 0 4px;
+}
+.round.third-place h3 {
+  background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.22), transparent);
+  color: var(--bronze);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.round.third-place .bracket-match {
+  border-color: rgba(251, 146, 60, 0.35);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.06), rgba(255, 255, 255, 0.03));
 }
 .bracket-match {
   background: rgba(255, 255, 255, 0.04);
