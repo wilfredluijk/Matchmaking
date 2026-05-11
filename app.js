@@ -41,6 +41,15 @@
       s.poules.forEach(p => { p.matches = scheduleMatches(p.matches); });
       s._scheduled = 2;
     }
+    if (s.knockout && s.knockout.rounds && s.knockout.thirdPlace === undefined) {
+      const totalRounds = s.knockout.rounds.length;
+      s.knockout.thirdPlace = totalRounds >= 2 ? {
+        id: 'tp',
+        slotA: { type: 'loser', round: totalRounds - 2, match: 0 },
+        slotB: { type: 'loser', round: totalRounds - 2, match: 1 },
+        sets: [],
+      } : null;
+    }
     return s;
   }
 
@@ -362,7 +371,19 @@
         rounds[r].matches[i].slotB = { type: 'winner', round: r - 1, match: i * 2 + 1 };
       }
     }
-    return { size, rounds };
+    // Bronze final: the two semifinal losers. Only meaningful when there
+    // actually are semifinals (i.e. the bracket has 4+ slots → ≥ 2 rounds).
+    let thirdPlace = null;
+    if (totalRounds >= 2) {
+      const sfRound = totalRounds - 2;
+      thirdPlace = {
+        id: 'tp',
+        slotA: { type: 'loser', round: sfRound, match: 0 },
+        slotB: { type: 'loser', round: sfRound, match: 1 },
+        sets: [],
+      };
+    }
+    return { size, rounds, thirdPlace };
   }
 
   function buildSeedList() {
@@ -401,17 +422,25 @@
       const s = seeds[slot.seed];
       return s ? { name: s.player, label: `${s.rank}${String.fromCharCode(65 + s.pouleIndex)}` } : null; // beyond list = bye
     }
-    if (slot.type === 'winner') {
+    if (slot.type === 'winner' || slot.type === 'loser') {
       const refMatch = knockout.rounds[slot.round].matches[slot.match];
       const a = resolveSlot(refMatch.slotA, seeds, knockout);
       const b = resolveSlot(refMatch.slotB, seeds, knockout);
-      // If one side is a bye and the other isn't, the non-bye auto-advances.
-      if (a && !b) return a;
-      if (b && !a) return b;
-      if (!a && !b) return null;
+      if (slot.type === 'winner') {
+        if (a && !b) return a;
+        if (b && !a) return b;
+        if (!a && !b) return null;
+        const r = matchResult(refMatch, state.bestOf);
+        if (r.winner === 0) return a;
+        if (r.winner === 1) return b;
+        return null;
+      }
+      // 'loser': only defined once the referenced match has both sides
+      // present and a decided winner. Byes have no losing player.
+      if (!a || !b) return null;
       const r = matchResult(refMatch, state.bestOf);
-      if (r.winner === 0) return a;
-      if (r.winner === 1) return b;
+      if (r.winner === 0) return b;
+      if (r.winner === 1) return a;
       return null;
     }
     return null;
@@ -493,6 +522,54 @@
     if (state.knockout) renderKnockout();
   }
 
+  function cardMinWidthForBestOf(bestOf) {
+    return Math.max(280, 220 + Math.max(0, bestOf - 1) * 60);
+  }
+
+  function refreshPouleMatchDecor(pi, mi) {
+    const m = state.poules[pi].matches[mi];
+    const r = matchResult(m, state.bestOf);
+    const anyInput = document.querySelector(
+      `.score-table input[data-poule="${pi}"][data-match="${mi}"]`
+    );
+    const card = anyInput && anyInput.closest('.match-card');
+    if (!card) return;
+    card.classList.toggle('finished', r.winner != null);
+    const rows = card.querySelectorAll('.score-table tbody tr');
+    rows.forEach((row, side) => row.classList.toggle('winner', r.winner === side));
+    const resultEl = card.querySelector('.match-result');
+    if (resultEl) {
+      if (r.winner != null) {
+        resultEl.textContent = `${m.players[r.winner]} wins ${r.winner === 0 ? r.setsA : r.setsB}–${r.winner === 0 ? r.setsB : r.setsA}`;
+        resultEl.classList.add('done');
+      } else {
+        resultEl.textContent = 'Match in progress';
+        resultEl.classList.remove('done');
+      }
+    }
+  }
+
+  function refreshPouleStandings(pi) {
+    const poule = state.poules[pi];
+    const standings = computeStandings(poule, state.bestOf);
+    const medalClass = idx => idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+    const pouleEls = document.querySelectorAll('#poules-container .poule');
+    if (!pouleEls[pi]) return;
+    const tbody = pouleEls[pi].querySelector('.standings-table tbody');
+    if (!tbody) return;
+    tbody.innerHTML = standings.map((s, idx) => `
+      <tr class="${idx < state.qualifiers ? 'is-qualifier' : ''}">
+        <td class="num"><span class="rank-badge ${medalClass(idx)}">${idx + 1}</span></td>
+        <td class="player-name">${escapeHtml(s.player)}</td>
+        <td class="num">${s.played}</td>
+        <td class="num">${s.wins}</td>
+        <td class="num">${s.losses}</td>
+        <td class="num">${s.setsFor}–${s.setsAgainst}</td>
+        <td class="num">${s.pointsFor}–${s.pointsAgainst}</td>
+      </tr>
+    `).join('');
+  }
+
   function renderPoules() {
     const container = document.getElementById('poules-container');
     container.innerHTML = '';
@@ -500,6 +577,8 @@
       container.innerHTML = '<div class="empty-state">No tournament generated yet. Go to <strong>Setup</strong> to begin.</div>';
       return;
     }
+
+    container.style.setProperty('--card-min-width', `${cardMinWidthForBestOf(state.bestOf)}px`);
 
     state.poules.forEach((poule, pi) => {
       const div = document.createElement('div');
@@ -568,7 +647,7 @@
       const isWinner = r.winner === side;
       const cells = Array.from({ length: state.bestOf }, (_, s) => {
         const cur = (m.sets[s] || ['', ''])[side] ?? '';
-        return `<td><input type="number" min="0" inputmode="numeric"
+        return `<td><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3"
           data-poule="${pi}" data-match="${mi}" data-set="${s}" data-side="${side}"
           value="${cur}" /></td>`;
       }).join('');
@@ -605,6 +684,14 @@
 
   function onScoreInput(e) {
     const inp = e.target;
+    // Allow only digits in the visible value while preserving caret position.
+    const cleaned = inp.value.replace(/[^0-9]/g, '');
+    if (cleaned !== inp.value) {
+      const drop = inp.value.length - cleaned.length;
+      const start = Math.max(0, (inp.selectionStart || 0) - drop);
+      inp.value = cleaned;
+      try { inp.setSelectionRange(start, start); } catch (_) {}
+    }
     const pi = +inp.dataset.poule;
     const mi = +inp.dataset.match;
     const setIdx = +inp.dataset.set;
@@ -615,12 +702,11 @@
     match.sets[setIdx] = match.sets[setIdx] || ['', ''];
     match.sets[setIdx][side] = val;
     save();
-    renderPoules();
+    // Partial updates only — don't rebuild inputs, which is what was
+    // causing the caret to land at the start and reverse typed digits.
+    refreshPouleMatchDecor(pi, mi);
+    refreshPouleStandings(pi);
     if (state.knockout) renderKnockout();
-    const restored = document.querySelector(
-      `.score-table input[data-poule="${pi}"][data-match="${mi}"][data-set="${setIdx}"][data-side="${side}"]`
-    );
-    if (restored) restored.focus();
   }
 
   function renderKnockout() {
@@ -687,6 +773,31 @@
       bracket.appendChild(col);
     });
 
+    if (state.knockout.thirdPlace) {
+      const m = state.knockout.thirdPlace;
+      const a = resolveSlot(m.slotA, seeds, state.knockout);
+      const b = resolveSlot(m.slotB, seeds, state.knockout);
+      const r = matchResult(m, state.bestOf);
+      const col = document.createElement('div');
+      col.className = 'round third-place';
+      col.innerHTML = `<h3>3rd place</h3>`;
+      const matchEl = document.createElement('div');
+      matchEl.className = 'bracket-match';
+      matchEl.appendChild(renderBracketRow(a, 0, 'tp', 0, r, false));
+      matchEl.appendChild(renderBracketRow(b, 1, 'tp', 0, r, false));
+      if (a && b) {
+        const hcap = getMatchHandicap(a.name, b.name);
+        if (hcap) {
+          const hl = document.createElement('div');
+          hl.className = 'bracket-handicap';
+          hl.textContent = `${hcap.lowerName} starts at ${hcap.points} (Δ ${hcap.diff})`;
+          matchEl.appendChild(hl);
+        }
+      }
+      col.appendChild(matchEl);
+      bracket.appendChild(col);
+    }
+
     container.appendChild(bracket);
 
     // Wire knockout inputs
@@ -704,12 +815,16 @@
     inputs.style.display = 'flex';
     inputs.style.gap = '4px';
     if (player && !isBye) {
-      const m = state.knockout.rounds[ri].matches[mi];
+      const m = ri === 'tp'
+        ? state.knockout.thirdPlace
+        : state.knockout.rounds[ri].matches[mi];
       for (let s = 0; s < state.bestOf; s++) {
         const cur = m.sets[s] || ['', ''];
         const inp = document.createElement('input');
-        inp.type = 'number';
-        inp.min = '0';
+        inp.type = 'text';
+        inp.inputMode = 'numeric';
+        inp.pattern = '[0-9]*';
+        inp.maxLength = 3;
         inp.dataset.round = ri;
         inp.dataset.match = mi;
         inp.dataset.set = s;
@@ -730,11 +845,20 @@
 
   function onKnockoutScoreInput(e) {
     const inp = e.target;
-    const ri = +inp.dataset.round;
+    const cleaned = inp.value.replace(/[^0-9]/g, '');
+    if (cleaned !== inp.value) {
+      const drop = inp.value.length - cleaned.length;
+      const start = Math.max(0, (inp.selectionStart || 0) - drop);
+      inp.value = cleaned;
+      try { inp.setSelectionRange(start, start); } catch (_) {}
+    }
+    const ri = inp.dataset.round;
     const mi = +inp.dataset.match;
     const setIdx = +inp.dataset.set;
     const side = +inp.dataset.side;
-    const match = state.knockout.rounds[ri].matches[mi];
+    const match = ri === 'tp'
+      ? state.knockout.thirdPlace
+      : state.knockout.rounds[+ri].matches[mi];
     while (match.sets.length <= setIdx) match.sets.push(['', '']);
     const val = inp.value === '' ? '' : Number(inp.value);
     match.sets[setIdx] = match.sets[setIdx] || ['', ''];
@@ -744,7 +868,10 @@
     const restored = document.querySelector(
       `.bracket-row input[data-round="${ri}"][data-match="${mi}"][data-set="${setIdx}"][data-side="${side}"]`
     );
-    if (restored) restored.focus();
+    if (restored) {
+      restored.focus();
+      try { restored.setSelectionRange(restored.value.length, restored.value.length); } catch (_) {}
+    }
   }
 
   function escapeHtml(s) {

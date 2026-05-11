@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smash · Live Tournament</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora-blob a"></span>
+    <span class="aurora-blob b"></span>
+    <span class="aurora-blob c"></span>
+  </div>
+
+  <header>
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <h1>Smash<span class="brand-dot">.</span></h1>
+      <span class="brand-tag">live tournament</span>
+      <span id="status-pill" class="status-pill connecting">Connecting…</span>
+    </div>
+    <nav>
+      <button data-tab="setup" class="tab-btn admin-only" hidden>Setup</button>
+      <button data-tab="poules" class="tab-btn active">Poules</button>
+      <button data-tab="knockout" class="tab-btn">Knockout</button>
+      <span id="auth-area" class="auth-area">
+        <button id="signin-btn" class="ghost">Sign in</button>
+      </span>
+      <button id="reset-btn" class="danger ghost admin-only" hidden>Reset</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-setup" class="tab admin-only" hidden>
+      <h2>Setup tournament</h2>
+      <p class="hint">Add one row per player with their name and rating. Players are distributed evenly across the chosen number of poules.</p>
+
+      <label>Players</label>
+      <div id="players-list"></div>
+      <div class="actions" style="margin-top: 8px;">
+        <button id="add-player-btn" class="ghost">+ Add player</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="num-poules">Number of poules</label>
+          <input id="num-poules" type="number" min="1" value="2" />
+        </div>
+        <div>
+          <label for="qualifiers">Qualifiers per poule</label>
+          <input id="qualifiers" type="number" min="1" value="2" />
+        </div>
+        <div>
+          <label for="best-of">Match format</label>
+          <select id="best-of">
+            <option value="1">Single set (highest score wins)</option>
+            <option value="3" selected>Best of 3 sets</option>
+            <option value="5">Best of 5 sets</option>
+            <option value="7">Best of 7 sets</option>
+          </select>
+        </div>
+      </div>
+
+      <details class="handicap-section">
+        <summary>Handicap table (rating difference → starting points)</summary>
+        <p class="hint">The lower-rated player starts each set with the listed points. Leave the upper bound empty for "or more".</p>
+        <div id="handicap-list"></div>
+        <div class="actions" style="margin-top: 8px;">
+          <button id="add-handicap-btn" class="ghost">+ Add row</button>
+          <button id="reset-handicap-btn" class="ghost">Reset to default</button>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button id="generate-btn" class="primary">Generate tournament →</button>
+      </div>
+    </section>
+
+    <section id="tab-poules" class="tab active">
+      <h2>Poule stage</h2>
+      <div id="poules-container"></div>
+      <div class="actions admin-only" hidden>
+        <button id="goto-knockout-btn" class="primary">Continue to knockout →</button>
+      </div>
+    </section>
+
+    <section id="tab-knockout" class="tab">
+      <h2>Knockout stage</h2>
+      <div id="knockout-container"></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Live data via Firebase. Read-only for participants. Admins sign in to edit.</small>
+  </footer>
+
+  <div id="login-modal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <h3 id="login-title">Admin sign in</h3>
+      <p class="hint">Use the email + password configured in Firebase Authentication.</p>
+      <form id="login-form" autocomplete="on">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="username" />
+        <label for="password">Password</label>
+        <input id="password" type="password" required autocomplete="current-password" />
+        <p id="login-error" class="login-error" hidden></p>
+        <div class="actions" style="justify-content:flex-end;">
+          <button type="button" id="login-cancel" class="ghost">Cancel</button>
+          <button type="submit" class="primary">Sign in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
