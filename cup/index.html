@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bekercompetitie · Cup Competition Match Form · NTTB Afdeling Oost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ---------- Reset & base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+
+    :root {
+      --paper:        #f1e7cf;
+      --paper-2:      #ebe0c2;
+      --paper-line:   #d8c89c;
+      --ink:          #0c0a08;
+      --ink-soft:     #2a2520;
+      --ink-faint:    #6a5d4c;
+      --red:          #c8102e;
+      --red-deep:     #931025;
+      --green:        #0a6b3c;
+      --green-deep:   #074a29;
+      --rule:         #0c0a08;
+      --warn-bg:      #fff3b8;
+      --shadow:       0 2px 0 #0c0a08, 0 12px 28px -18px rgba(12,10,8,.55);
+
+      --font-display: 'Big Shoulders Display', 'Archivo Black', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font-mono);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(200, 16, 46, .06), transparent 60%),
+        radial-gradient(900px 600px at 110% 10%, rgba(10, 107, 60, .06), transparent 60%),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0, transparent 31px,
+          rgba(12,10,8,.05) 31px, rgba(12,10,8,.05) 32px
+        ),
+        var(--paper);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    /* ---------- Layout shell ---------- */
+    .sheet {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 28px 80px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .crumb {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .crumb a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 1px;
+    }
+    .crumb a:hover { color: var(--red); border-color: var(--red); }
+
+    .stamp {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .22em;
+      color: var(--red);
+      border: 2px solid var(--red);
+      padding: 6px 12px 5px;
+      transform: rotate(-3deg);
+      background: rgba(255,255,255,.4);
+    }
+
+    /* ---------- Header ---------- */
+    header.masthead {
+      border-top: 3px solid var(--ink);
+      border-bottom: 3px solid var(--ink);
+      padding: 14px 0 12px;
+      margin-bottom: 22px;
+      position: relative;
+    }
+    header.masthead::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      top: 6px;
+      border-top: 1px solid var(--ink);
+    }
+    header.masthead::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      bottom: 5px;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .masthead-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 24px;
+    }
+    .masthead .kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .masthead .kicker.right { text-align: right; }
+    .masthead h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(38px, 6.5vw, 78px);
+      line-height: .85;
+      letter-spacing: -.01em;
+      margin: 4px 0 0;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .masthead h1 .dot { color: var(--red); }
+    .masthead .subtitle {
+      text-align: center;
+      font-family: var(--font-display);
+      font-weight: 500;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 6px;
+    }
+
+    /* ---------- Section titles ---------- */
+    .section-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      font-size: 14px;
+      margin: 0 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      background: var(--red);
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+    }
+    .section-title .count {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .2em;
+      color: var(--ink-faint);
+      font-weight: 400;
+    }
+
+    /* ---------- Meta strip ---------- */
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border: 2px solid var(--ink);
+      background: rgba(255,255,255,.35);
+      margin-bottom: 22px;
+    }
+    .meta .cell {
+      padding: 10px 14px;
+      border-right: 1px solid var(--ink);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .meta .cell:last-child { border-right: 0; }
+    .meta label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .meta input {
+      font: inherit;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--ink);
+      padding: 2px 0 4px;
+      outline: none;
+      color: var(--ink);
+    }
+    .meta input:focus { border-bottom-color: var(--red); }
+
+    /* ---------- Teams ---------- */
+    .teams {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+    .team-card {
+      border: 2px solid var(--ink);
+      background: rgba(255,255,255,.4);
+      box-shadow: var(--shadow);
+    }
+    .team-card header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--ink);
+      background: var(--paper-2);
+    }
+    .team-card.home header { border-bottom-color: var(--red); }
+    .team-card.away header { border-bottom-color: var(--green); }
+    .team-card .badge {
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .2em;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    .team-card.home .badge { color: var(--red); }
+    .team-card.away .badge { color: var(--green); }
+    .team-card .role {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .team-card .club {
+      padding: 8px 14px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-bottom: 1px dashed var(--ink);
+    }
+    .team-card .club label {
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .team-card .club input {
+      font: inherit;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 2px 0 4px;
+      color: var(--ink);
+    }
+    .team-card .players {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .team-card .players li {
+      display: grid;
+      grid-template-columns: 44px 1fr 88px;
+      align-items: stretch;
+      border-top: 1px solid var(--ink);
+    }
+    .team-card .players li:first-child { border-top: none; }
+    .team-card .players .slot {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--ink);
+      color: var(--paper);
+      border-right: 2px solid var(--ink);
+    }
+    .team-card.home .players .slot { background: var(--red); }
+    .team-card.away .players .slot { background: var(--green); }
+    .team-card .players input {
+      font: inherit;
+      font-family: var(--font-mono);
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 10px 14px;
+      color: var(--ink);
+    }
+    .team-card .players input.rating {
+      border-left: 1px dashed var(--ink);
+      text-align: right;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .team-card .players input:focus {
+      background: rgba(255, 248, 220, .8);
+    }
+    .team-card .players input::placeholder { color: var(--ink-faint); }
+
+    /* ---------- Actions ---------- */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      padding: 12px 18px 10px;
+      background: var(--paper);
+      color: var(--ink);
+      border: 2px solid var(--ink);
+      box-shadow: 3px 3px 0 var(--ink);
+      cursor: pointer;
+      transition: transform .08s ease, box-shadow .08s ease, background .15s ease;
+    }
+    button:hover { background: var(--paper-2); }
+    button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+    button.primary {
+      background: var(--red);
+      color: #fff7e8;
+    }
+    button.primary:hover { background: var(--red-deep); }
+    button.secondary {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    button.secondary:hover { background: #1c1814; }
+    button.ghost {
+      background: transparent;
+      box-shadow: none;
+    }
+    button.ghost:hover { background: rgba(0,0,0,.05); }
+
+    /* ---------- Results ---------- */
+    .schedule {
+      border: 2px solid var(--ink);
+      background: rgba(255,255,255,.5);
+      box-shadow: var(--shadow);
+      margin-bottom: 26px;
+    }
+    .schedule .schedule-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--ink);
+      background: var(--paper-2);
+    }
+    .schedule .schedule-head h2 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      font-size: 15px;
+      margin: 0;
+    }
+    .schedule .schedule-head .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 10px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .legend .swatch {
+      display: inline-block;
+      width: 11px; height: 11px;
+      vertical-align: -1px;
+      border: 1.5px solid var(--ink);
+      margin-right: 5px;
+    }
+    .legend .swatch.t1 { background: var(--red); }
+    .legend .swatch.t2 { background: var(--green); }
+
+    table.results {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    table.results th, table.results td {
+      border: 1px solid var(--ink);
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    table.results th {
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-size: 11px;
+      background: var(--ink);
+      color: var(--paper);
+    }
+    table.results td.players {
+      text-align: left;
+      font-weight: 500;
+      white-space: nowrap;
+      padding-left: 12px;
+    }
+    table.results td.players .vs {
+      color: var(--ink-faint);
+      padding: 0 6px;
+      font-weight: 400;
+    }
+    table.results td.players .pair-a { color: var(--red-deep); font-weight: 700; }
+    table.results td.players .pair-b { color: var(--green-deep); font-weight: 700; }
+    table.results td.game {
+      width: 38px;
+      height: 32px;
+      background: rgba(255,255,255,.35);
+    }
+    table.results td.result {
+      width: 64px;
+      font-weight: 700;
+    }
+    table.results td.handicap {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    table.results td.handicap.zero { color: var(--ink-faint); font-weight: 400; }
+    table.results td.handicap .a { color: var(--red-deep); }
+    table.results td.handicap .b { color: var(--green-deep); }
+    table.results td.handicap .sep { color: var(--ink-faint); padding: 0 4px; }
+
+    table.results tr.match.t1 td.table-cell {
+      background: var(--red);
+      color: #fff7e8;
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .12em;
+      width: 56px;
+    }
+    table.results tr.match.t2 td.table-cell {
+      background: var(--green);
+      color: #fff7e8;
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .12em;
+      width: 56px;
+    }
+    table.results tr.match td.num {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 16px;
+      width: 44px;
+    }
+    table.results tr.match.doubles td.players { font-style: italic; }
+    table.results tr.match.doubles td.num::after {
+      content: " ✕2";
+      font-size: 10px;
+      color: var(--ink-faint);
+      letter-spacing: 0;
+      font-weight: 500;
+    }
+
+    .warn-row td {
+      background: var(--warn-bg);
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      text-align: left;
+      color: var(--ink-soft);
+    }
+
+    /* ---------- Reference ---------- */
+    .reference {
+      border: 2px solid var(--ink);
+      background: rgba(255,255,255,.4);
+      margin-bottom: 24px;
+    }
+    .reference > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 10px 14px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--paper-2);
+      border-bottom: 2px solid var(--ink);
+    }
+    .reference[open] > summary { border-bottom: 2px solid var(--ink); }
+    .reference > summary::-webkit-details-marker { display: none; }
+    .reference > summary::after {
+      content: "+";
+      font-family: var(--font-display);
+      font-size: 22px;
+      line-height: 1;
+      transition: transform .2s ease;
+    }
+    .reference[open] > summary::after { content: "−"; }
+    .reference .body {
+      padding: 14px 16px 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    .reference h3 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      font-size: 12px;
+      margin: 0 0 8px;
+      color: var(--ink-soft);
+    }
+    .reference ul, .reference ol {
+      margin: 0 0 12px;
+      padding-left: 18px;
+    }
+    .reference li { margin-bottom: 4px; }
+    .reference table.hcap {
+      width: 100%;
+      border-collapse: collapse;
+      font-variant-numeric: tabular-nums;
+    }
+    .reference table.hcap th,
+    .reference table.hcap td {
+      border: 1px solid var(--ink);
+      padding: 5px 8px;
+      text-align: left;
+      font-size: 12px;
+    }
+    .reference table.hcap th {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .reference table.hcap td:last-child {
+      text-align: center;
+      font-weight: 700;
+      color: var(--red-deep);
+    }
+
+    /* ---------- Footer ---------- */
+    footer.colophon {
+      border-top: 3px solid var(--ink);
+      padding-top: 12px;
+      font-size: 11px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 800px) {
+      .masthead-grid { grid-template-columns: 1fr; gap: 6px; }
+      .masthead .kicker.right { text-align: left; }
+      .meta { grid-template-columns: 1fr 1fr; }
+      .meta .cell:nth-child(2) { border-right: 0; }
+      .meta .cell:nth-child(1),
+      .meta .cell:nth-child(2) { border-bottom: 1px solid var(--ink); }
+      .teams { grid-template-columns: 1fr; }
+      .reference .body { grid-template-columns: 1fr; }
+      table.results td.game { width: 28px; }
+    }
+
+    /* ---------- Print ---------- */
+    @media print {
+      @page { size: A4 portrait; margin: 10mm; }
+      html, body {
+        background: #fff;
+        font-size: 11px;
+      }
+      body::before, .stamp, .actions, .reference, .topbar, .colophon a {
+        display: none !important;
+      }
+      .sheet { max-width: none; padding: 0; }
+      .team-card, .schedule, .meta { box-shadow: none; background: #fff; }
+      table.results th { background: #000; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.results tr.match.t1 td.table-cell { background: #c8102e; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      table.results tr.match.t2 td.table-cell { background: #0a6b3c; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .team-card .players .slot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      header.masthead h1 { font-size: 40px; }
+      table.results td.game { height: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+
+    <div class="topbar">
+      <div class="crumb">
+        <a href="../index.html">← Tournament setup</a>
+        <span> / Bekercompetitie</span>
+      </div>
+      <div class="stamp">NTTB · Afdeling Oost</div>
+    </div>
+
+    <header class="masthead">
+      <div class="masthead-grid">
+        <div class="kicker">Bekercompetitie<br/>Match Form № 04-A</div>
+        <div>
+          <h1>Cup<span class="dot">.</span>Form</h1>
+          <div class="subtitle">Two teams · Sixteen singles · Two doubles</div>
+        </div>
+        <div class="kicker right">Best of 5 games to 11<br/>Two tables · Eighteen matches</div>
+      </div>
+    </header>
+
+    <h2 class="section-title">Match details <span class="count">Metadata</span></h2>
+    <div class="meta" id="meta">
+      <div class="cell">
+        <label for="m-date">Date</label>
+        <input id="m-date" type="date" />
+      </div>
+      <div class="cell">
+        <label for="m-pool">Pool</label>
+        <input id="m-pool" type="text" placeholder="e.g. Oost 1" />
+      </div>
+      <div class="cell">
+        <label for="m-num">Match number</label>
+        <input id="m-num" type="text" placeholder="e.g. 1234" />
+      </div>
+      <div class="cell">
+        <label for="m-club">Club submitting form</label>
+        <input id="m-club" type="text" placeholder="e.g. TTV Hilversum" />
+      </div>
+    </div>
+
+    <h2 class="section-title">Teams <span class="count">A vs B — four players each</span></h2>
+    <div class="teams">
+      <section class="team-card home" aria-label="Home team">
+        <header>
+          <span class="badge">Team A</span>
+          <span class="role">Home · Thuis</span>
+        </header>
+        <div class="club">
+          <label for="a-club">Club / Team name</label>
+          <input id="a-club" type="text" placeholder="e.g. TTV Hilversum 1" />
+        </div>
+        <ol class="players" id="team-a-players"></ol>
+      </section>
+
+      <section class="team-card away" aria-label="Away team">
+        <header>
+          <span class="badge">Team B</span>
+          <span class="role">Away · Uit</span>
+        </header>
+        <div class="club">
+          <label for="b-club">Club / Team name</label>
+          <input id="b-club" type="text" placeholder="e.g. TTV Twente 2" />
+        </div>
+        <ol class="players" id="team-b-players"></ol>
+      </section>
+    </div>
+
+    <div class="actions" id="actions">
+      <button class="primary" id="calc-btn">Calculate schedule &amp; handicap</button>
+      <button class="secondary" id="example-btn">Fill example</button>
+      <button class="ghost" id="clear-btn">Clear</button>
+      <button id="print-btn">Print / Save as PDF</button>
+    </div>
+
+    <div class="schedule" id="schedule">
+      <div class="schedule-head">
+        <h2>Schedule &amp; handicap</h2>
+        <div class="legend">
+          <span><span class="swatch t1"></span>Table 1</span>
+          <span><span class="swatch t2"></span>Table 2</span>
+        </div>
+      </div>
+      <table class="results">
+        <thead>
+          <tr>
+            <th>Table</th>
+            <th>#</th>
+            <th style="text-align:left; padding-left:12px;">Players</th>
+            <th>Handicap (A – B)</th>
+            <th>G1</th><th>G2</th><th>G3</th><th>G4</th><th>G5</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+
+    <details class="reference">
+      <summary>Rules &amp; handicap reference</summary>
+      <div class="body">
+        <div>
+          <h3>Format</h3>
+          <ul>
+            <li>Two teams of four players each: A1–A4 and B1–B4.</li>
+            <li>18 matches total: 16 singles + 2 doubles.</li>
+            <li>Sets are best of 5 games to 11 points. Each won set = 1 point.</li>
+            <li>Two tables in parallel: odd match number → Table 1, even → Table 2.</li>
+          </ul>
+          <h3>Match order</h3>
+          <ol>
+            <li>A1–B3 · A2–B4 · A3–B1 · A4–B2</li>
+            <li>A1–B4 · A2–B3 · A3–B2 · A4–B1</li>
+            <li>Doubles A1+A2 vs B3+B4</li>
+            <li>Doubles A3+A4 vs B1+B2</li>
+            <li>A1–B2 · A2–B1 · A3–B4 · A4–B3</li>
+            <li>A1–B1 · A2–B2 · A3–B3 · A4–B4</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Handicap table</h3>
+          <table class="hcap">
+            <thead>
+              <tr><th>Rating difference</th><th>Head start</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>0 – 135</td><td>0</td></tr>
+              <tr><td>136 – 270</td><td>2</td></tr>
+              <tr><td>271 – 305</td><td>3</td></tr>
+              <tr><td>306 – 440</td><td>4</td></tr>
+              <tr><td>441 – 575</td><td>5</td></tr>
+              <tr><td>576 – 810</td><td>6</td></tr>
+              <tr><td>811 or more</td><td>7</td></tr>
+            </tbody>
+          </table>
+          <h3 style="margin-top:14px;">Doubles handicap</h3>
+          <ul>
+            <li>Take the handicap for the difference between the two <strong>highest-rated</strong> players (one per team).</li>
+            <li>Take the handicap for the difference between the two <strong>lowest-rated</strong> players (one per team).</li>
+            <li>Add them, divide by 2, round <strong>up</strong> (<code>Math.ceil</code>).</li>
+            <li>The pair with the <strong>lower average</strong> rating receives the head start.</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <footer class="colophon">
+      <span>NTTB Afdeling Oost · Bekercompetitie · Cup Form</span>
+      <span>Handicap rules verified against the official example</span>
+    </footer>
+  </div>
+
+  <script>
+    'use strict';
+
+    // ---------- Handicap logic ----------
+    function handicapFor(diff) {
+      const d = Math.abs(diff);
+      if (d <= 135) return 0;
+      if (d <= 270) return 2;
+      if (d <= 305) return 3;
+      if (d <= 440) return 4;
+      if (d <= 575) return 5;
+      if (d <= 810) return 6;
+      return 7;
+    }
+
+    // Returns { points, receiver: 'A'|'B'|null, diff }
+    function singlesHandicap(ratingA, ratingB) {
+      const hasA = Number.isFinite(ratingA);
+      const hasB = Number.isFinite(ratingB);
+      if (!hasA || !hasB) return { points: null, receiver: null, diff: null };
+      const diff = Math.abs(ratingA - ratingB);
+      const points = handicapFor(diff);
+      let receiver = null;
+      if (points > 0) receiver = ratingA < ratingB ? 'A' : 'B';
+      return { points, receiver, diff };
+    }
+
+    // a/b are arrays of 2 ratings each
+    function doublesHandicap(a, b) {
+      const aValid = a.every(Number.isFinite);
+      const bValid = b.every(Number.isFinite);
+      if (!aValid || !bValid) return { points: null, receiver: null, diff: null };
+      const aSorted = [...a].sort((x, y) => y - x);
+      const bSorted = [...b].sort((x, y) => y - x);
+      const highDiff = Math.abs(aSorted[0] - bSorted[0]);
+      const lowDiff  = Math.abs(aSorted[1] - bSorted[1]);
+      const hpHigh = handicapFor(highDiff);
+      const hpLow  = handicapFor(lowDiff);
+      const points = Math.ceil((hpHigh + hpLow) / 2);
+      const aAvg = (aSorted[0] + aSorted[1]) / 2;
+      const bAvg = (bSorted[0] + bSorted[1]) / 2;
+      let receiver = null;
+      if (points > 0 && aAvg !== bAvg) receiver = aAvg < bAvg ? 'A' : 'B';
+      return { points, receiver, highDiff, lowDiff, hpHigh, hpLow, aAvg, bAvg };
+    }
+
+    // ---------- Match order (official) ----------
+    const MATCH_ORDER = [
+      { num:  1, type: 'single', a: 1, b: 3 },
+      { num:  2, type: 'single', a: 2, b: 4 },
+      { num:  3, type: 'single', a: 3, b: 1 },
+      { num:  4, type: 'single', a: 4, b: 2 },
+      { num:  5, type: 'single', a: 1, b: 4 },
+      { num:  6, type: 'single', a: 2, b: 3 },
+      { num:  7, type: 'single', a: 3, b: 2 },
+      { num:  8, type: 'single', a: 4, b: 1 },
+      { num:  9, type: 'double', a: [1, 2], b: [3, 4] },
+      { num: 10, type: 'double', a: [3, 4], b: [1, 2] },
+      { num: 11, type: 'single', a: 1, b: 2 },
+      { num: 12, type: 'single', a: 2, b: 1 },
+      { num: 13, type: 'single', a: 3, b: 4 },
+      { num: 14, type: 'single', a: 4, b: 3 },
+      { num: 15, type: 'single', a: 1, b: 1 },
+      { num: 16, type: 'single', a: 2, b: 2 },
+      { num: 17, type: 'single', a: 3, b: 3 },
+      { num: 18, type: 'single', a: 4, b: 4 },
+    ];
+
+    // ---------- State ----------
+    const state = {
+      teamA: { club: '', players: [makePlayer(), makePlayer(), makePlayer(), makePlayer()] },
+      teamB: { club: '', players: [makePlayer(), makePlayer(), makePlayer(), makePlayer()] },
+    };
+
+    function makePlayer() { return { name: '', rating: null }; }
+
+    // ---------- Rendering: team rows ----------
+    function renderTeamRows() {
+      ['A', 'B'].forEach((side) => {
+        const team = side === 'A' ? state.teamA : state.teamB;
+        const list = document.getElementById(side === 'A' ? 'team-a-players' : 'team-b-players');
+        list.innerHTML = '';
+        team.players.forEach((p, i) => {
+          const li = document.createElement('li');
+          const slotLabel = side + (i + 1);
+          li.innerHTML = `
+            <span class="slot">${slotLabel}</span>
+            <input class="name" type="text" placeholder="Player name"
+                   aria-label="${slotLabel} name" />
+            <input class="rating" type="number" inputmode="numeric"
+                   step="1" min="0" placeholder="Rating"
+                   aria-label="${slotLabel} rating" />
+          `;
+          const nameInput = li.querySelector('.name');
+          const ratingInput = li.querySelector('.rating');
+          nameInput.value = p.name;
+          ratingInput.value = p.rating == null ? '' : p.rating;
+          nameInput.addEventListener('input', (e) => { p.name = e.target.value; });
+          ratingInput.addEventListener('input', (e) => {
+            const v = e.target.value.trim();
+            p.rating = v === '' ? null : Number(v);
+            if (!Number.isFinite(p.rating)) p.rating = null;
+          });
+          list.appendChild(li);
+        });
+      });
+
+      const aClub = document.getElementById('a-club');
+      const bClub = document.getElementById('b-club');
+      aClub.value = state.teamA.club;
+      bClub.value = state.teamB.club;
+      aClub.oninput = (e) => { state.teamA.club = e.target.value; };
+      bClub.oninput = (e) => { state.teamB.club = e.target.value; };
+    }
+
+    // ---------- Display helpers ----------
+    function displayName(side, idx) {
+      const team = side === 'A' ? state.teamA : state.teamB;
+      const p = team.players[idx];
+      const name = (p.name || '').trim();
+      return name || '—';
+    }
+
+    function handicapCell(points, receiver) {
+      if (points == null) {
+        return `<td class="handicap zero" title="rating missing">— <span class="sep">·</span> —</td>`;
+      }
+      if (points === 0 || receiver == null) {
+        return `<td class="handicap zero">0 <span class="sep">–</span> 0</td>`;
+      }
+      const a = receiver === 'A' ? points : 0;
+      const b = receiver === 'B' ? points : 0;
+      return `<td class="handicap"><span class="a">${a}</span><span class="sep">–</span><span class="b">${b}</span></td>`;
+    }
+
+    // ---------- Schedule renderer ----------
+    function renderSchedule() {
+      const tbody = document.getElementById('results-body');
+      tbody.innerHTML = '';
+
+      // missing-rating warning row
+      const aRatings = state.teamA.players.map(p => p.rating);
+      const bRatings = state.teamB.players.map(p => p.rating);
+      const missing = [];
+      aRatings.forEach((r, i) => { if (!Number.isFinite(r)) missing.push('A' + (i + 1)); });
+      bRatings.forEach((r, i) => { if (!Number.isFinite(r)) missing.push('B' + (i + 1)); });
+      if (missing.length) {
+        const tr = document.createElement('tr');
+        tr.className = 'warn-row';
+        tr.innerHTML = `<td colspan="10">⚠ Rating missing for: ${missing.join(', ')} — affected rows show “rating missing”.</td>`;
+        tbody.appendChild(tr);
+      }
+
+      MATCH_ORDER.forEach((m) => {
+        const tableNo = m.num % 2 === 1 ? 1 : 2;
+        const tr = document.createElement('tr');
+        tr.className = `match t${tableNo}` + (m.type === 'double' ? ' doubles' : '');
+
+        let playersHtml = '';
+        let h;
+        if (m.type === 'single') {
+          const aIdx = m.a - 1, bIdx = m.b - 1;
+          const aName = displayName('A', aIdx);
+          const bName = displayName('B', bIdx);
+          playersHtml = `
+            <span class="pair-a">A${m.a} · ${escapeHtml(aName)}</span>
+            <span class="vs">vs</span>
+            <span class="pair-b">B${m.b} · ${escapeHtml(bName)}</span>
+          `;
+          h = singlesHandicap(aRatings[aIdx], bRatings[bIdx]);
+        } else {
+          const a1Idx = m.a[0] - 1, a2Idx = m.a[1] - 1;
+          const b1Idx = m.b[0] - 1, b2Idx = m.b[1] - 1;
+          const aPair = `A${m.a[0]}+A${m.a[1]} · ${escapeHtml(displayName('A', a1Idx))} / ${escapeHtml(displayName('A', a2Idx))}`;
+          const bPair = `B${m.b[0]}+B${m.b[1]} · ${escapeHtml(displayName('B', b1Idx))} / ${escapeHtml(displayName('B', b2Idx))}`;
+          playersHtml = `
+            <span class="pair-a">${aPair}</span>
+            <span class="vs">vs</span>
+            <span class="pair-b">${bPair}</span>
+          `;
+          h = doublesHandicap(
+            [aRatings[a1Idx], aRatings[a2Idx]],
+            [bRatings[b1Idx], bRatings[b2Idx]]
+          );
+        }
+
+        const hCell = handicapCell(h.points, h.receiver);
+        const diffLabel = (h.points == null)
+          ? 'rating missing'
+          : (m.type === 'single'
+              ? `Δ ${h.diff}`
+              : `Δhi ${h.highDiff} (${h.hpHigh}) · Δlo ${h.lowDiff} (${h.hpLow})`);
+
+        tr.innerHTML = `
+          <td class="table-cell">T${tableNo}</td>
+          <td class="num">${m.num}</td>
+          <td class="players" title="${escapeAttr(diffLabel)}">${playersHtml}</td>
+          ${hCell}
+          <td class="game"></td>
+          <td class="game"></td>
+          <td class="game"></td>
+          <td class="game"></td>
+          <td class="game"></td>
+          <td class="result"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    // ---------- Buttons ----------
+    function fillExample() {
+      // Uses the official doubles example for A1 & A4 and B1 & A4.
+      state.teamA.club = 'TTV Hilversum 1';
+      state.teamB.club = 'TTV Twente 2';
+      state.teamA.players = [
+        { name: 'Lotte de Boer',   rating: 1448 },
+        { name: 'Jeroen Visser',   rating: 1120 },
+        { name: 'Pieter Janssens', rating: 980  },
+        { name: 'Sanne Smit',      rating: 860  },
+      ];
+      state.teamB.players = [
+        { name: 'Max Klein',       rating: 1257 },
+        { name: 'Eva Kovács',      rating: 1015 },
+        { name: 'Tom de Vries',    rating: 770  },
+        { name: 'Noa Mulder',      rating: 561  },
+      ];
+      document.getElementById('m-pool').value = 'Oost 1';
+      document.getElementById('m-num').value  = '4023';
+      document.getElementById('m-club').value = 'TTV Hilversum';
+      const today = new Date();
+      const iso = today.toISOString().slice(0, 10);
+      document.getElementById('m-date').value = iso;
+
+      renderTeamRows();
+      renderSchedule();
+    }
+
+    function clearAll() {
+      state.teamA = { club: '', players: [makePlayer(), makePlayer(), makePlayer(), makePlayer()] };
+      state.teamB = { club: '', players: [makePlayer(), makePlayer(), makePlayer(), makePlayer()] };
+      ['m-date', 'm-pool', 'm-num', 'm-club'].forEach((id) => { document.getElementById(id).value = ''; });
+      renderTeamRows();
+      renderSchedule();
+    }
+
+    // ---------- Init ----------
+    document.getElementById('calc-btn').addEventListener('click', renderSchedule);
+    document.getElementById('example-btn').addEventListener('click', fillExample);
+    document.getElementById('clear-btn').addEventListener('click', clearAll);
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+    renderTeamRows();
+    renderSchedule();
+
+    // ---------- Self-check: verify against official example ----------
+    (function selfCheck() {
+      const ex = doublesHandicap([1448, 860], [1257, 561]);
+      const ok = ex.hpHigh === 2 && ex.hpLow === 3 && ex.points === 3 && ex.receiver === 'B';
+      if (!ok && typeof console !== 'undefined') {
+        console.error('Doubles handicap self-check FAILED:', ex);
+      } else if (typeof console !== 'undefined') {
+        console.info('Doubles handicap self-check OK', ex);
+      }
+    })();
+  </script>
+</body>
+</html>
