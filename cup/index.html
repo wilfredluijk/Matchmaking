@@ -756,11 +756,11 @@
             </tbody>
           </table>
           <h3 style="margin-top:14px;">Doubles handicap</h3>
-          <p>Two doubles are played: <strong>A1+A2 vs B3+B4</strong> and <strong>A3+A4 vs B1+B2</strong>. For each doubles, take the head start for the <strong>highest-rated</strong> player of each team (top board) and for the <strong>lowest-rated</strong> player of each team (bottom board). The boards are then paired <strong>across both doubles</strong>:</p>
+          <p>Two doubles are played: <strong>A1+A2 vs B3+B4</strong> and <strong>A3+A4 vs B1+B2</strong>. Each doubles' head start is computed on its <strong>own</strong> two boards:</p>
           <ul>
-            <li><strong>Doubles 1</strong> (A1+A2 vs B3+B4) receives the average of <em>both</em> doubles' <strong>top-board</strong> head starts.</li>
-            <li><strong>Doubles 2</strong> (A3+A4 vs B1+B2) receives the average of <em>both</em> doubles' <strong>bottom-board</strong> head starts.</li>
-            <li>Each average is rounded <strong>away from zero</strong> (<code>ceil</code> of the absolute value).</li>
+            <li>Take the head start for the <strong>highest-rated</strong> player of each team (top board).</li>
+            <li>Take the head start for the <strong>lowest-rated</strong> player of each team (bottom board).</li>
+            <li>Add the two and divide by 2, then round the decimal <strong>up</strong> (<code>ceil</code> of the absolute value).</li>
             <li>The weaker side of that average receives the head start.</li>
           </ul>
         </div>
@@ -813,12 +813,13 @@
       return Math.sign(x) * Math.ceil(Math.abs(x));
     }
 
-    // Doubles head start, per the official Bekercompetitie sheet.
+    // Doubles head start, per the official Bekercompetitie rule.
     // Two doubles are played:  D1 = A1+A2 vs B3+B4,  D2 = A3+A4 vs B1+B2.
-    // The sheet pairs the boards ACROSS both doubles:
-    //   • D1 (match 9)  receives the average of BOTH doubles' TOP-board voorgift.
-    //   • D2 (match 10) receives the average of BOTH doubles' BOTTOM-board voorgift.
-    // Each average is rounded away from zero, so all eight ratings are required.
+    // Each doubles' handicap is computed on its OWN two boards:
+    //   • take the voorgift between the two HIGHEST-rated players (top board),
+    //   • take the voorgift between the two LOWEST-rated players (bottom board),
+    //   • average the two and round the decimal up (away from zero).
+    // The weaker side of that average receives the head start.
     // aRatings/bRatings hold a team's four ratings (index 0..3 = slot 1..4).
     function doublesHandicaps(aRatings, bRatings) {
       const pairs = [
@@ -851,8 +852,8 @@
       }
 
       return {
-        9:  { ...combine(boards[0].top,    boards[1].top),    board: 'top',    boards },
-        10: { ...combine(boards[0].bottom, boards[1].bottom), board: 'bottom', boards },
+        9:  { ...combine(boards[0].top, boards[0].bottom), board: 'D1', boards },
+        10: { ...combine(boards[1].top, boards[1].bottom), board: 'D2', boards },
       };
     }
 
@@ -1002,8 +1003,8 @@
         } else if (m.type === 'single') {
           diffLabel = `Δ ${h.diff}`;
         } else {
-          const key = h.board === 'top' ? 'topDiff' : 'bottomDiff';
-          diffLabel = `${h.board} boards: Δ${h.boards[0][key]} & Δ${h.boards[1][key]} (avg of both doubles) → ${h.points}`;
+          const bd = h.boards[h.board === 'D1' ? 0 : 1];
+          diffLabel = `top Δ${bd.topDiff} & bottom Δ${bd.bottomDiff} → avg, round up → ${h.points}`;
         }
 
         tr.innerHTML = `
@@ -1078,14 +1079,24 @@
 
     // ---------- Self-check: verify against official example ----------
     (function selfCheck() {
-      // Official example (fillExample data): both doubles give B a 2-point head start.
+      // Official example from the rule sheet — a single doubles:
+      //   A = 1448 & 860, B = 1257 & 561  (mapped onto D1 = A1+A2 vs B3+B4).
+      //   highest diff 1448-1257 = 191 -> 2; lowest diff 860-561 = 299 -> 3;
+      //   ceil((2 + 3) / 2) = 3, B (lower average) receives -> 0-3.
+      const single = doublesHandicaps([1448, 860, 1000, 1000], [1000, 1000, 1257, 561]);
+      const okSingle = single[9].points === 3 && single[9].receiver === 'B';
+
+      // Full 4-v-4 example: each doubles is scored on its own two boards.
+      //   D1 = {1448,1120} vs {770,561}: top 678->6, bottom 559->5, ceil(5.5)=6, B receives.
+      //   D2 = {980,860} vs {1257,1015}: top 277->3, bottom 155->2, ceil(2.5)=3, A receives.
       const ex = doublesHandicaps([1448, 1120, 980, 860], [1257, 1015, 770, 561]);
-      const ok = ex[9].points === 2 && ex[9].receiver === 'B'
-              && ex[10].points === 2 && ex[10].receiver === 'B';
-      if (!ok && typeof console !== 'undefined') {
-        console.error('Doubles handicap self-check FAILED:', ex);
+      const okFull = ex[9].points === 6 && ex[9].receiver === 'B'
+                  && ex[10].points === 3 && ex[10].receiver === 'A';
+
+      if ((!okSingle || !okFull) && typeof console !== 'undefined') {
+        console.error('Doubles handicap self-check FAILED:', { single, ex });
       } else if (typeof console !== 'undefined') {
-        console.info('Doubles handicap self-check OK', ex);
+        console.info('Doubles handicap self-check OK', { single, ex });
       }
     })();
   </script>
