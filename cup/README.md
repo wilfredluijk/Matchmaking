@@ -52,13 +52,14 @@ from the **absolute** rating difference:
 
 | Rating difference | Head start |
 |-------------------|------------|
-| 0 – 135           | 0          |
-| 136 – 270         | 2          |
-| 271 – 305         | 3          |
-| 306 – 440         | 4          |
-| 441 – 575         | 5          |
-| 576 – 810         | 6          |
-| 811 or more       | 7 (max)    |
+| 0 – 100           | 0          |
+| 101 – 200         | 2          |
+| 201 – 325         | 3          |
+| 326 – 450         | 4          |
+| 451 – 600         | 5          |
+| 601 – 750         | 6          |
+| 751 – 1000        | 7          |
+| 1001 or more      | 8 (max)    |
 
 ### Singles handicap
 
@@ -87,10 +88,13 @@ Per the official rules:
 > Team B has the lower average rating (909 < 1154) and therefore receives
 > the head start.
 
-The app's `doublesHandicap` function is asserted against this example on
-load; a failed self-check is logged to the browser console. The handicap
-function was additionally verified in Node against every boundary value of
-the table above and against the official doubles example.
+Each of the two doubles in a cup tie is scored independently on its own two
+boards (top board = highest-rated player of each team, bottom board =
+lowest-rated). The two board values are averaged and the decimal rounded up.
+
+The app's `doublesHandicaps` function is asserted against this example on
+load (both the single-doubles case above and the full four-versus-four
+example), and a failed self-check is logged to the browser console.
 
 ## How to use
 
